@@ -22,16 +22,16 @@ function okFunction(obj, cb) {
 describe('#intercept()', function() {
     it('should intercept a truthy error value', function(done) {
         sinon.spy(mycro.services.error, 'notify');
-        errorProneFunction({}, mycro.services.error.intercept(true, function() {
+        errorProneFunction({}, mycro.services.error.intercept(function() {
             expect(mycro.services.error.notify).to.have.been.called;
             mycro.services.error.notify.restore();
             done();
         }));
     });
 
-    it('should extract the error from a successful callback if no `passErrorToCallback` option is provided', function(done) {
+    it('should strip the error from a successful callback if `stripErrorFromCallback` option is provided', function(done) {
         sinon.spy(mycro.services.error, 'notify');
-        okFunction({}, mycro.services.error.intercept(function(val) {
+        okFunction({}, mycro.services.error.intercept(true, function(val) {
             expect(mycro.services.error.notify).to.not.have.been.called;
             mycro.services.error.notify.restore();
             expect(val).to.equal('ok!');
