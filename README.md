@@ -78,3 +78,46 @@ async.waterfall([
     res.json(200, {data: data});
 }));
 ```
+
+Define your applications errors in a config file
+```javascript
+// in config/errors.js
+module.exports = {
+    badRequest: {
+        status: 400,
+        title: 'Bad Request'
+    },
+    query: {
+        status: 500,
+        title: 'Database Query Error'
+    }
+}
+```
+
+Convert errors into defined errors
+```javascript
+Posts.find({ published: true }, function(err, posts) {
+    if (err) {
+        err = errorService.get('query', err.message);
+        console.log(err); // { status: 500, title: 'Database Query Error', detail: 'ECONNECT'}
+    }
+});
+```
+
+Or, better yet, wrap your callbacks
+```javascript
+joi.validate(req.body, schema, errorService.wrap('badRequest', function(err, data) {
+    if (err) {
+        console.log(err); // { status: 400, title: 'Bad Request', detail: 'Child \'attr\' fails because \'attr\' is required'}
+    }
+}));
+```
+
+And, you can even call your notifiers with the raw error first
+```javascript
+Posts.find({ published: true }, errorService.wrap(true, 'query', function(err, posts) {
+    if (err) {
+        console.log(err); // { status: 500, title: 'Database Query Error', detail: 'ECONNECT'}
+    }
+}));
+```
