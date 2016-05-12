@@ -121,3 +121,19 @@ Posts.find({ published: true }, errorService.wrap(true, 'query', function(err, p
     }
 }));
 ```
+
+## Testing
+run the test suite
+```bash
+npm test
+```
+
+## Contributing
+1. [Fork it](https://github.com/cludden/mycro-error/fork)
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create new Pull Request
+
+## License
+Copyright (c) 2016 Chris Ludden. Licensed under the [MIT License](LICENSE.md)
