@@ -78,3 +78,62 @@ async.waterfall([
     res.json(200, {data: data});
 }));
 ```
+
+Define your applications errors in a config file
+```javascript
+// in config/errors.js
+module.exports = {
+    badRequest: {
+        status: 400,
+        title: 'Bad Request'
+    },
+    query: {
+        status: 500,
+        title: 'Database Query Error'
+    }
+}
+```
+
+Convert errors into defined errors
+```javascript
+Posts.find({ published: true }, function(err, posts) {
+    if (err) {
+        err = errorService.get('query', err.message);
+        console.log(err); // { status: 500, title: 'Database Query Error', detail: 'ECONNECT'}
+    }
+});
+```
+
+Or, better yet, wrap your callbacks
+```javascript
+joi.validate(req.body, schema, errorService.wrap('badRequest', function(err, data) {
+    if (err) {
+        console.log(err); // { status: 400, title: 'Bad Request', detail: 'Child \'attr\' fails because \'attr\' is required'}
+    }
+}));
+```
+
+And, you can even call your notifiers with the raw error first
+```javascript
+Posts.find({ published: true }, errorService.wrap(true, 'query', function(err, posts) {
+    if (err) {
+        console.log(err); // { status: 500, title: 'Database Query Error', detail: 'ECONNECT'}
+    }
+}));
+```
+
+## Testing
+run the test suite
+```bash
+npm test
+```
+
+## Contributing
+1. [Fork it](https://github.com/cludden/mycro-error/fork)
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create new Pull Request
+
+## License
+Copyright (c) 2016 Chris Ludden. Licensed under the [MIT License](LICENSE.md)
