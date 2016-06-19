@@ -1,6 +1,6 @@
 {
   "name": "mycro-error",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "error handling service for mycro apps",
   "main": "index.js",
   "scripts": {
