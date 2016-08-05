@@ -1,27 +1,27 @@
-/* jshint expr:true */
 'use strict';
 
-var chai = require('chai'),
-    sinon = require('sinon');
+const ErrorService = require('../../lib/service');
+const test = require('tape');
 
-let expect = chai.expect;
+const errorService = new ErrorService();
 
-describe('#addNotifer()', function() {
-    let test = {
-        notifyError: function() {
-            console.error('test.notify()');
-        }
-    };
+test('#addNotifer should exist', function(t) {
+    t.equal(typeof errorService.addNotifier, 'function', 'is defined');
+    t.end();
+});
 
-    it('should add a notifer to the list of notifiers', function(done) {
-        sinon.spy(test, 'notifyError');
-        mycro.services.error.addNotifier(test.notifyError);
-        mycro.services.error.notify(new Error('something unexpected'), {user: 1}, function(err) {
-            expect(err).to.not.exist;
-            expect(test.notifyError).to.have.been.called;
-            expect(test.notifyError.lastCall.args).to.have.lengthOf(2);
-            test.notifyError.restore();
-            done();
-        });
-    });
+test('#addNotifer should add functions to notifier array', function(t) {
+    function myNotifier() {
+        console.error.apply(console, arguments);
+    }
+    errorService.addNotifier(myNotifier);
+    t.equal(errorService.notifiers.length, 1, 'should add notifier');
+    errorService.notifiers.pop();
+    t.end();
+});
+
+test('#addNotifier should skip non function argument', function(t) {
+    errorService.addNotifier(1);
+    t.equal(errorService.notifiers.length, 0, 'should ignore notifier');
+    t.end();
 });

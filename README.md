@@ -18,70 +18,38 @@ module.exports = {
 }
 ```
 
+
+
 ## Getting Started
-Add a custom notifier. *By default, the only notifier enabled is a `logger` notifier*
+Add a custom notifier.
+
+*By default, the only notifier enabled is a `logger` notifier*
 ```javascript
-// hooks/bugsnag.js
-var bugsnag = require('bugsnag');
+// /hooks/bugsnag.js
+const bugsnag = require('bugsnag');
 
 module.exports = function(done) {
-    let mycro = this;
+    const mycro = this;
+    const errorService = mycro.services.error;
+
     bugsnag.register(/* stuff */);
-    mycro.services.error.addNotifier(bugsnag.notify);
-    done();
+
+    errorService.addNotifier(bugsnag.notify);
+    process.nextTick(done);
 }
 ```
 
-Handle an error
+Allow all notifiers a chance to process the error.
 ```javascript
-let errorService = mycro.services.error;
 // ..
 if (err) {
     errorService.notify(err);
 }
 ```
 
-Intercept an error
+Define named application errors in a config file
 ```javascript
-// default functionality
-somethingAsync(errorService.intercept(function(err, val) {
-    // if an error occurred, all notifiers will be called with the
-    // error, and the error will be available for additional handling here
-}));
-
-// prevent the callback from executing
-somethingAsync(errorService.intercept(true, function(val) {
-    // if an error occurred, all notifiers will be called with the
-    // error, and this callback will never be called.
-}));
-```
-
-Add a custom error response handler
-```javascript
-errorService.responseHandler = function(res, error) {
-    // inspect the error or serialize it
-    res.json(500, {errors: [error]});
-}
-```
-
-Intercept a response handler
-```javascript
-async.waterfall([
-    function findData(fn) {
-        // ..
-    },
-
-    function processData(data, fn) {
-        // ..
-    }
-], errorService.interceptResponse(res, function(data) {
-    res.json(200, {data: data});
-}));
-```
-
-Define your applications errors in a config file
-```javascript
-// in config/errors.js
+// in /config/errors.js
 module.exports = {
     badRequest: {
         status: 400,
@@ -94,33 +62,46 @@ module.exports = {
 }
 ```
 
-Convert errors into defined errors
+wrap your functions and callbacks
 ```javascript
-Posts.find({ published: true }, function(err, posts) {
+function someFunctionThatThrows() {
+    throw new Error('Uh oh!');
+}
+const wrapped = errorService.wrapSync('someError', 'my custom error message', someFunctionThatThrows);
+
+somethingAsync(errorService.wrap('badRequest', function(err, data) {
     if (err) {
-        err = errorService.get('query', err.message);
-        console.log(err); // { status: 500, title: 'Database Query Error', detail: 'ECONNECT'}
+        console.log(err);
     }
+}));
+```
+
+Add a custom error response handler
+```javascript
+errorService.defineResponseHandler(function(res, error) {
+    // inspect the error or serialize it
+    const payload = serialize(error);
+    res.status(error.status).json(payload);
 });
 ```
 
-Or, better yet, wrap your callbacks
+Intercept a response handler
 ```javascript
-joi.validate(req.body, schema, errorService.wrap('badRequest', function(err, data) {
-    if (err) {
-        console.log(err); // { status: 400, title: 'Bad Request', detail: 'Child \'attr\' fails because \'attr\' is required'}
-    }
-}));
+somethingAsync(errorService.sendResponse(res, function(data) {
+    // if an error occurred, res will be handled by the responseHandler
+    // and this will never execute
+    res.status(200).json({ data });
+}))
+
+SomePromise()
+.then(function(data) {
+    res.status(200).json({ data });
+})
+.catch(errorService.sendResponse(res))
 ```
 
-And, you can even call your notifiers with the raw error first
-```javascript
-Posts.find({ published: true }, errorService.wrap(true, 'query', function(err, posts) {
-    if (err) {
-        console.log(err); // { status: 500, title: 'Database Query Error', detail: 'ECONNECT'}
-    }
-}));
-```
+
+
 
 ## Testing
 run the test suite
@@ -128,12 +109,16 @@ run the test suite
 npm test
 ```
 
+
+
 ## Contributing
 1. [Fork it](https://github.com/cludden/mycro-error/fork)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
+
+
 
 ## License
 Copyright (c) 2016 Chris Ludden. Licensed under the [MIT License](LICENSE.md)
