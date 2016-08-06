@@ -1,5 +1,5 @@
 # mycro-error
-a [mycro](https://github.com/cludden/mycro) hook that provides an `error` service with utility error handling methods.
+a [mycro](https://github.com/cludden/mycro) hook that provides an `error` service with utility error handling methods courtesy of [boom](https://github.com/hapijs/boom).
 
 ## Install
 install
@@ -12,7 +12,6 @@ add to hooks
 // in config/hooks.js
 module.exports = {
     // ..
-    'services',
     'mycro-error',
     // ..
 }
@@ -21,92 +20,138 @@ module.exports = {
 
 
 ## Getting Started
-Add a custom notifier.
 
-*By default, the only notifier enabled is a `logger` notifier*
+
+
+## API
+
+### *new* ErrorService(errors)
+Constructor function.
+
+###### Parameters
+| Name | Type | Description |
+| --- | --- | --- |
+| errors* | Object | error definitions |
+
+###### Example
 ```javascript
-// /hooks/bugsnag.js
+const ErrorService = require('mycro-error/lib/service');
+
+const errors = {
+    accessTokenMissing: {
+        status: 400,
+        title: 'Missing Access Token',
+        code: 'access-token-missing'
+    }
+};
+
+const errorService = new Service(errors);
+```
+---
+
+### #addNotifier(notifier)
+Install a notifier.
+
+###### Parameters
+| Name | Type | Description |
+| --- | --- | --- |
+| notifier* | Function | notifier function |
+
+###### Example
+```javascript
 const bugsnag = require('bugsnag');
+bugsnag.register({apiKey: '**************'})
 
-module.exports = function(done) {
-    const mycro = this;
-    const errorService = mycro.services.error;
+errorService.addNotifier(bugsnag.notify);
+```
+---
 
-    bugsnag.register(/* stuff */);
+### #get(name)
+returns the error definition with the specified name or an undefined error definition.
 
-    errorService.addNotifier(bugsnag.notify);
-    process.nextTick(done);
+###### Parameters
+| Name | Type | Description |
+| --- | --- | --- |
+| name* | String | definition key |
+
+###### Example
+```javascript
+console.log(errorService.get('accessTokenMissing'));
+```
+---
+
+### #initialize(err, nameOrStatus, msg, properties)
+Convert an error into a boom error with additional definition data. See *wrap* for additional functionality.
+
+###### Parameters
+| Name | Type | Description |
+| --- | --- | --- |
+| err* | Error | the error to convert. if not an Error instance, a new error will instantiated |
+| nameOrStatus | Number,String | the name of the error definition or an http status |
+| msg | String | custom message/detail to use. if not provided, the existing error message will be used |
+| properties | Object | additional data to be included at `err.data` |
+
+###### Returns
+Error - the decorated error
+
+###### Example
+```javascript
+if (err) {
+    errorService.initialize(err, 'accessTokenMissing', 'No access token was found on the request', { id: req.id });
 }
 ```
+---
 
-Allow all notifiers a chance to process the error.
+### #notify(...args)
+Pass an error to all notifiers for handling.
+
+###### Parameters
+| Name | Type | Description |
+| --- | --- | --- |
+| args* | * | all arguments will be passed to all notifiers |
+
+###### Example
 ```javascript
-// ..
 if (err) {
     errorService.notify(err);
 }
 ```
+---
 
-Define named application errors in a config file
+### #wrap(...args)
+Wrap a callback function. If the callback is called with an error, convert it using the provided data, pass error to all notifiers, and then pass to the original callback. If no callback function is passed as an argument, an curried version of the wrapping function will be returned.
+
+###### Example
 ```javascript
-// in /config/errors.js
-module.exports = {
-    badRequest: {
-        status: 400,
-        title: 'Bad Request'
-    },
-    query: {
-        status: 500,
-        title: 'Database Query Error'
-    }
-}
-```
+// convert any error passed by #doSomethingAsync using the "my-error" definition
+doSomethingAsync(errorService.wrap('my-error', function(err, data) {
+    console.log(err);
+}));
 
-wrap your functions and callbacks
-```javascript
-function someFunctionThatThrows() {
-    throw new Error('Uh oh!');
-}
-const wrapped = errorService.wrapSync('someError', 'my custom error message', someFunctionThatThrows);
+// convert any error passed to a generic forbidden error.
+doSomethingAsync(errorService.wrap(403, 'Uh oh! not allowed!', function(err, data) {
+    console.log(err);
+}));
 
-somethingAsync(errorService.wrap('badRequest', function(err, data) {
-    if (err) {
-        console.log(err);
-    }
+const wrapReqError = errorService.wrap({ req: req.id });
+const wrapMyError = wrapReqError('my-error');
+doSomethingAsync(wrapMyError('my custom message', function(err, data) {
+    console.log(err);
 }));
 ```
-
-Add a custom error response handler
-```javascript
-errorService.defineResponseHandler(function(res, error) {
-    // inspect the error or serialize it
-    const payload = serialize(error);
-    res.status(error.status).json(payload);
-});
-```
-
-Intercept a response handler
-```javascript
-somethingAsync(errorService.sendResponse(res, function(data) {
-    // if an error occurred, res will be handled by the responseHandler
-    // and this will never execute
-    res.status(200).json({ data });
-}))
-
-SomePromise()
-.then(function(data) {
-    res.status(200).json({ data });
-})
-.catch(errorService.sendResponse(res))
-```
-
+---
 
 
 
 ## Testing
-run the test suite
+run tests
 ```bash
 npm test
+```
+
+run coverage
+```bash
+npm run test
 ```
 
 

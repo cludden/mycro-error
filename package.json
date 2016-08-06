@@ -4,6 +4,7 @@
   "description": "error handling service for mycro apps",
   "main": "index.js",
   "scripts": {
+    "coverage": "istanbul cover tape test/tests/**/*.test.js",
     "test": "tape test/tests/**/*.test.js"
   },
   "keywords": [
@@ -13,7 +14,7 @@
   "author": "chris ludden",
   "license": "MIT",
   "dependencies": {
-    "http-errors": "^1.5.0",
+    "boom": "^3.2.2",
     "lodash": "^4.5.1"
   },
   "devDependencies": {
