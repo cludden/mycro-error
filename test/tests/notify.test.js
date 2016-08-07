@@ -1,8 +1,8 @@
 'use strict';
 
-const ErrorService = require('../../lib/service');
-const td = require('testdouble');
-const test = require('tape');
+import ErrorService from '../../lib/service';
+import td from 'testdouble';
+import test from 'tape';
 
 const errorService = new ErrorService();
 

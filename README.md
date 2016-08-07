@@ -19,10 +19,6 @@ module.exports = {
 
 
 
-## Getting Started
-
-
-
 ## API
 
 ### *new* ErrorService(errors)
@@ -118,8 +114,47 @@ if (err) {
 ```
 ---
 
+### #sendResponse(res, [cb])
+Convenience function for sending error responses. If a callback is provided, it will be wrapped, and if an error is passed, this function will intercept it and pass it to the defined response handler. If no callback is provided, a new function will be returned, that will, if called with an error, pass it to the defined response handler.
+
+###### Parameters
+| Name | Type | Description |
+| --- | --- | --- |
+| res* | Response | the response instance |
+| cb | Function | a callback function to intercept |
+
+###### Example
+```javascript
+// in /app/controllers/users/get-by-id.js
+module.exports = function(mycro) {
+    return function getById(req, res, next) {
+        const Err = mycro.services.error;
+        const Users = mycro.models.user;
+
+        Users.findById(req.params.user_id)
+        .then(function(user) {
+            res.status(200).send({ user });
+        })
+        .catch(Err.sendResponse(res))
+    }
+}
+
+// in /app/controllers/user/query.js
+module.exports = function(mycro) {
+    return function query(req, res, next) {
+        const Err = mycro.services.error;
+        const Users = mycro.models.user;
+
+        Users.find({}, Err.sendResponse(res, function(users) {
+            res.status(200).send({ users });
+        }));
+    }
+}
+```
+---
+
 ### #wrap(...args)
-Wrap a callback function. If the callback is called with an error, convert it using the provided data, pass error to all notifiers, and then pass to the original callback. If no callback function is passed as an argument, an curried version of the wrapping function will be returned.
+Wrap a callback function. If the callback is called with an error, convert it using the provided data, pass error to all notifiers, and then pass to the original callback. If no callback function is passed as an argument, a curried version of the wrapping function will be returned.
 
 ###### Example
 ```javascript
@@ -138,6 +173,27 @@ const wrapMyError = wrapReqError('my-error');
 doSomethingAsync(wrapMyError('my custom message', function(err, data) {
     console.log(err);
 }));
+```
+---
+
+### #wrapSync(...args)
+Wrap a synchronous function that could potentially throw. Convert any error thrown using the provided data, pass error to all notifiers, and then throw the converted error. If no function is passed as an argument, a curried version of the wrapping function will be returned.
+
+###### Example
+```javascript
+// convert any error passed by #doSomethingAsync using the "my-error" definition
+function findMin(values) {
+    if (!_.isArray(values) || !values.length) {
+        throw new Error('Unable to find min of non/empty array');
+    }
+    return Math.min.apply(Math, values);
+}
+Transactions.findByAccountId(id)
+.then(errorService.wrapSync(404, findMin))
+.then(function(min) {
+    res.status(200).send({ min });
+})
+.catch(Err.sendResponse(res))
 ```
 ---
 

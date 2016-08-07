@@ -1,7 +1,7 @@
 'use strict';
 
-const ErrorService = require('../../lib/service');
-const test = require('tape');
+import ErrorService from '../../lib/service';
+import test from 'tape';
 
 const errors = {
     myError: { status: 421, title: 'abcdefg', code: 'my-error' }

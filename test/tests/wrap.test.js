@@ -1,7 +1,7 @@
 'use strict';
 
-const ErrorService = require('../../lib/service');
-const test = require('tape');
+import ErrorService from '../../lib/service';
+import test from 'tape';
 
 const errors = {
     myError: { status: 499, title: 'MY ERROR'},
@@ -52,17 +52,14 @@ test('#wrap should return a wrapped function immediately if callback is present'
 });
 
 test('#wrap should work with status instead of code', function(t) {
-    const u = errorService.get('undefined');
     const e = new Error('uh oh!');
     const status = 421;
     const detail = 'some detail';
     const wrapped = errorService.wrap(status, detail, function(err) {
         t.ok(err instanceof Error, 'should return an error');
         t.equal(err.output.statusCode, status, 'should have status: ' + status);
-        t.equal(err.data.code, u.code, 'should have code: ' + u.code);
         t.equal(err.data.detail, detail, 'should use specified detail');
         t.equal(err.message, detail, 'should use specified detail as message');
-        t.equal(err.data.title, u.title, 'should have title: ' + u.title);
         t.end();
     });
     wrapped(e);

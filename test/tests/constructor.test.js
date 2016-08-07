@@ -1,9 +1,8 @@
 'use strict';
 
-const ErrorService = require('../../lib/service');
-const test = require('tape');
-const _ = require('lodash');
-
+import ErrorService from '../../lib/service';
+import test from 'tape';
+import _ from 'lodash';
 
 const nonObjects = [1, 'hello', /world/g, new Date()];
 nonObjects.forEach(function(nonObject) {
