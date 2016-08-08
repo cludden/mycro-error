@@ -17,7 +17,7 @@
   "author": "chris ludden",
   "license": "MIT",
   "dependencies": {
-    "errlich": "^1.0.0-0",
+    "errlich": "^1.0.0",
     "lodash": "^4.14.2"
   },
   "devDependencies": {
