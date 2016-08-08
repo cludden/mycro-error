@@ -1,6 +1,6 @@
 {
   "name": "mycro-error",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "errlich hook for mycro apps",
   "main": "./dist/index.js",
   "scripts": {
