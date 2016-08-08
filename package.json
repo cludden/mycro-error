@@ -6,6 +6,7 @@
   "scripts": {
     "build": "babel lib -d dist",
     "coverage": "./node_modules/.bin/babel-node ./node_modules/.bin/babel-istanbul cover tape test/tests/**/*.test.js",
+    "postversion": "npm run build",
     "test": "babel-tape-runner test/tests/**/*.test.js"
   },
   "keywords": [
