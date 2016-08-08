@@ -1,15 +1,11 @@
 'use strict';
 
-function Mycro(errors) {
 
-    if (errors) {
-        this.config = { errors };
+export default class Mycro {
+    constructor(config) {
+        this.config = config;
+        this.log = function(...args) {
+            console.error.apply(console, args);
+        };
     }
-
-    this.log = function() {
-        const args = Array.prototype.slice.call(arguments);
-        console.error.apply(console, args);
-    };
 }
-
-module.exports = Mycro;
